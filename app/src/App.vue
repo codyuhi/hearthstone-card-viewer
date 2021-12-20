@@ -11,7 +11,7 @@
           <select class="form-control" v-model="this.class">
             <option value="Druid" key="Druid" selected>Druid</option>
             <option value="Warlock" key="Warlock">Warlock</option>
-            <option value="NA" key="NA">N/A</option>
+            <option value="N/A" key="NA">N/A</option>
           </select>
         </div>
         <div class="filter">
@@ -24,7 +24,7 @@
             <option value="Legendary" key="Legendary" selected>
               Legendary
             </option>
-            <option value="NA" key="NA">N/A</option>
+            <option value="N/A" key="NA">N/A</option>
           </select>
         </div>
       </div>
@@ -46,7 +46,7 @@
         <tbody>
           <Card
             v-for="card in cards"
-            :value="card"
+            :value="card.name.en_US"
             :key="card.name"
             :card="card"
           />
@@ -58,6 +58,7 @@
 
 <script>
 import Card from "./components/Card.vue";
+import axios from "axios";
 
 export default {
   name: "App",
@@ -72,28 +73,67 @@ export default {
   },
   components: { Card },
   methods: {
+    async getAccessToken() {
+      await axios({
+        url: `${process.env.VUE_APP_LOGIN_URL}/oauth/token`,
+        method: "post",
+        headers: {
+          "Content-Type": "x-www-form-urlencoded",
+        },
+        auth: {
+          username: process.env.VUE_APP_CLIENT_ID,
+          password: process.env.VUE_APP_CLIENT_SECRET,
+        },
+        params: new URLSearchParams({
+          grant_type: "client_credentials",
+        }),
+      })
+        .then((res) => {
+          if (res.data.access_token) {
+            localStorage.accessToken = res.data.access_token;
+          } else {
+            localStorage.clear("accessToken");
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    },
     getCards() {
-      try {
-        // TODO: Implement network call here
-        this.cards = [
-          { name: "test", cardTypeId: 4 },
-          { name: "test", cardTypeId: 4 },
-          { name: "test", cardTypeId: 4 },
-          { name: "test", cardTypeId: 4 },
-          { name: "test", cardTypeId: 4 },
-          { name: "test", cardTypeId: 4 },
-          { name: "test", cardTypeId: 4 },
-          { name: "test", cardTypeId: 4 },
-          { name: "test", cardTypeId: 4 },
-        ];
-      } catch (err) {
-        console.error(err);
-      } finally {
-        this.isLoading = false;
+      let queryParams = `?locale=en_US&page=1&pageSize=10&sort=id%3asc&order&access_token=${localStorage.accessToken}`;
+      if (this.class !== "N/A") {
+        queryParams += `&class=${this.class.toLowerCase()}`;
       }
+      let manaString = "";
+      if (this.mana > 0) {
+        for (let i = this.mana; i < 15; i++) {
+          if (i !== this.mana) {
+            manaString += ",";
+          }
+          manaString += i;
+        }
+        queryParams += `&manaCost=${manaString}`;
+      }
+      if (this.rarity !== "N/A") {
+        queryParams += `&rarity=${this.rarity.toLowerCase()}`;
+      }
+      axios
+        .get(`${process.env.VUE_APP_API_URL}/hearthstone/cards${queryParams}`)
+        .then((res) => {
+          this.cards = res.data.cards;
+        })
+        .catch((err) => {
+          console.error(err);
+        })
+        .finally(() => {
+          this.isLoading = false;
+        });
     },
   },
   mounted() {
+    if (!localStorage.accessToken) {
+      this.getAccessToken();
+    }
     this.getCards();
   },
 };
@@ -148,7 +188,6 @@ export default {
 
 hr {
   border: 1px solid lightgray;
-
 }
 
 .filter-header {
@@ -180,5 +219,9 @@ hr {
 
 table {
   border-collapse: collapse;
+}
+
+thead > tr > th {
+  padding: 10px;
 }
 </style>
