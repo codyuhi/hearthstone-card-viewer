@@ -31,7 +31,7 @@ touch .env
 
 ```
 VUE_APP_LOGIN_URL=https://us.battle.net
-VUE_APP_BASE_URL=https://us.api.blizzard.com
+VUE_APP_API_URL=https://us.api.blizzard.com
 VUE_APP_CLIENT_ID=<YOUR_CLIENT_ID>
 VUE_APP_CLIENT_SECRET=<YOUR_CLIENT_SECRET>
 ```
