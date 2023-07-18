@@ -44,7 +44,7 @@
           </tr>
         </thead>
         <tbody>
-          <Card
+          <CardComponent
             v-for="card in cards"
             :value="card.name.en_US"
             :key="card.name"
@@ -57,7 +57,7 @@
 </template>
 
 <script>
-import Card from "./components/Card.vue";
+import CardComponent from "./components/CardComponent.vue";
 import axios from "axios";
 
 export default {
@@ -71,9 +71,9 @@ export default {
       cards: [],
     };
   },
-  components: { Card },
+  components: { CardComponent },
   methods: {
-    async getAccessToken() {
+    async getAccessToken() {      
       await axios({
         url: `${process.env.VUE_APP_LOGIN_URL}/oauth/token`,
         method: "post",
